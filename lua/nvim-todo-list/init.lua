@@ -1,27 +1,38 @@
--- main module file
 local funcs = require('nvim-todo-list.funcs')
-
----@class Config
----@field opt string Your config option
-local config = {
-  opt = 'Hello!',
-}
+local Config = require('nvim-todo-list.config')
+local Ui = require('nvim-todo-list.ui')
 
 ---@class TodoList
-local M = {}
+---@field config TodoListConfig
+---@field ui TodoListUI
+local TodoList = {}
 
----@type Config
-M.config = config
+function TodoList:new()
+  local config = Config.get_default_config()
+  local todolist = setmetatable({
+    config = config,
+    ui = Ui:new(config.settings),
+  }, self)
 
----@param args Config?
--- you can define your setup function here. Usually configurations can be merged, accepting outside params and
--- you can also put some validation here for those.
-M.setup = function(args)
-  M.config = vim.tbl_deep_extend('force', M.config, args or {})
+  return todolist
 end
 
-M.hello = function()
-  return funcs.my_first_function(M.config.opt, M.config.name)
+local the_todolist = TodoList:new()
+---@param self TodoList
+---@param user_config TodoListConfig?
+---@return TodoList
+TodoList.setup = function(self, user_config)
+  -- you can define your setup function here. Usually configurations
+  -- can be merged, accepting outside params and you can also put
+  -- some validation here for those.
+  if self ~= the_todolist then
+    ---@diagnostic disable-next-line: cast-local-type
+    user_config = self
+    self = the_todolist
+  end
+  self.config = vim.tbl_deep_extend('force', the_todolist.config, user_config or {})
 end
 
-return M
+TodoList.hello = function(self)
+  return funcs.my_first_function(self.config.opt, self.config.name)
+end
