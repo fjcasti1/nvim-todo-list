@@ -2,8 +2,8 @@
 local M = {}
 
 ---@return string
-M.my_first_function = function(greeting)
-  print(greeting)
+M.my_first_function = function(greeting, name)
+  print(greeting, name)
   return greeting
 end
 
