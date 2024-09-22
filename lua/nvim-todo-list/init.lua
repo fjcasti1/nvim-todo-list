@@ -21,6 +21,7 @@ M.setup = function(args)
 end
 
 M.hello = function()
+  P(M.config)
   return funcs.my_first_function(M.config.opt, M.config.name)
 end
 
