@@ -8,4 +8,3 @@
 --     return { 'foo', 'bar', 'baz' }
 --   end,
 -- })
-print('HELLO')

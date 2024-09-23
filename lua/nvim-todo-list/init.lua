@@ -99,12 +99,18 @@ local function open_file_in_split(filepath, direction)
       end
     end,
   })
+  -- Set up an autocommand to ensure buffer stays unlisted even when manually saved
+  vim.api.nvim_create_autocmd('BufWritePost', {
+    buffer = file_bufnr, -- Attach to the specific buffer
+    callback = function()
+      vim.bo.buflisted = false -- Ensure the buffer stays unlisted after any save operation
+    end,
+  })
 end
 
 function TodoList:open()
   -- Function to open or create a file using plenary
   local file_path = Path:new(self.config.filepath)
-  P(self)
   file_path = Path:new(file_path:expand())
   assert(
     file_path:is_absolute() == true,
