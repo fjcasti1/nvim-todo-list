@@ -1,12 +1,12 @@
----@class TodoListUI
-local TodoListUI = {}
+---@class TodoListUIConfig
+---@field split string
+local TodoListUIConfig = {}
 
----@param settings table<string, string>
----@return TodoListUI
-function TodoListUI:new(settings)
-  return setmetatable({
-    settings = settings,
-  }, self)
+---@return TodoListUIConfig
+function TodoListUIConfig.get_default_ui_settings()
+  return {
+    split = 'left',
+  }
 end
 
-return TodoListUI
+return TodoListUIConfig

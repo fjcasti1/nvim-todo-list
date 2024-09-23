@@ -1,18 +1,15 @@
 local funcs = require('nvim-todo-list.funcs')
 local Config = require('nvim-todo-list.config')
-local Ui = require('nvim-todo-list.ui')
 local Path = require('plenary.path')
 
 ---@class TodoList
 ---@field config TodoListConfig
----@field ui TodoListUI
 local TodoList = {}
 
 function TodoList:new()
   local config = Config.get_default_config()
   local instance = {
     config = config,
-    ui = Ui:new(config.settings),
   }
   local todolist = setmetatable(instance, self)
   self.__index = self
@@ -51,7 +48,21 @@ local file_bufnr = nil
 local file_winid = nil
 
 -- Function to open a file in a vertical split and remember the buffer/window
-local function open_file_in_split(filepath)
+local function open_file_in_split(filepath, direction)
+  -- Determine the split direction based on the argument
+  local split_cmd
+  if direction == 'left' then
+    split_cmd = 'leftabove vsplit' -- Open a vertical split on the left
+  elseif direction == 'right' then
+    split_cmd = 'vsplit' -- Open a vertical split on the right (default behavior)
+  elseif direction == 'up' then
+    split_cmd = 'leftabove split' -- Open a horizontal split above
+  elseif direction == 'down' then
+    split_cmd = 'split' -- Open a horizontal split below
+  else
+    -- Default to right split if direction is invalid or not provided
+    split_cmd = 'vsplit'
+  end
   -- Check if the file buffer already exists and is valid
   if file_bufnr and vim.api.nvim_buf_is_valid(file_bufnr) then
     -- Check if the window for the file is still valid
@@ -61,7 +72,7 @@ local function open_file_in_split(filepath)
       return
     else
       -- The buffer exists but the window was closed, so we need to reopen the split
-      vim.cmd('vsplit')
+      vim.cmd(split_cmd)
       file_winid = vim.api.nvim_get_current_win()
       vim.api.nvim_win_set_buf(file_winid, file_bufnr)
       return
@@ -69,17 +80,25 @@ local function open_file_in_split(filepath)
   end
 
   -- If no valid file buffer exists, create a new one
-  vim.cmd('vsplit') -- Open a vertical split
+  vim.cmd(split_cmd) -- Open a vertical split
   file_winid = vim.api.nvim_get_current_win()
 
   -- Open the file in a new buffer
   vim.cmd('edit ' .. filepath)
   file_bufnr = vim.api.nvim_get_current_buf() -- Store the buffer number
 
-  -- Make sure the buffer is modifiable, as we're opening a file for editing
-  vim.bo.modifiable = true
-  -- Don't show buffer in buffer list
-  vim.bo.buflisted = false
+  vim.bo.modifiable = true -- Make sure the buffer is modifiable, as we're opening a file for editing
+  vim.bo.buflisted = false -- Don't show buffer in buffer list
+
+  -- Set up an autocommand to automatically save the file when exiting the buffer
+  vim.api.nvim_create_autocmd('BufWinLeave', {
+    buffer = file_bufnr, -- Attach to the specific buffer
+    callback = function()
+      if vim.bo.modified then -- Only save if there are changes
+        vim.cmd('silent! write') -- Save the file
+      end
+    end,
+  })
 end
 
 function TodoList:open()
@@ -98,8 +117,7 @@ function TodoList:open()
     -- If it doesn't exist, create an empty file
     file_path:touch({ parents = true }) -- Create file and missing directories
   end
-
-  open_file_in_split(file_path:absolute())
+  open_file_in_split(file_path:absolute(), self.config.ui.split)
 end
 
 return the_todolist
