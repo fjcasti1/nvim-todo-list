@@ -1,7 +1,7 @@
 local funcs = require('nvim-todo-list.funcs')
 local Config = require('nvim-todo-list.config')
 local Ui = require('nvim-todo-list.ui')
-local Util = require('nvim-todo-list.utils')
+local Path = require('plenary.path')
 
 ---@class TodoList
 ---@field config TodoListConfig
@@ -36,11 +36,70 @@ function TodoList.setup(self, user_config)
   self.config = vim.tbl_deep_extend('force', self.config, user_config or {})
   return self
 end
+
+-- TODO: Remove this function
 function TodoList:info()
-  Util.pretty_print('Todolist info', self)
+  P(self)
 end
 
 function TodoList:hello()
   return funcs.my_first_function(self.config.greeting, self.config.name)
 end
+
+-- Variable to store the buffer number and window ID for the opened file
+local file_bufnr = nil
+local file_winid = nil
+
+-- Function to open a file in a vertical split and remember the buffer/window
+local function open_file_in_split(filepath)
+  -- Check if the file buffer already exists and is valid
+  if file_bufnr and vim.api.nvim_buf_is_valid(file_bufnr) then
+    -- Check if the window for the file is still valid
+    if file_winid and vim.api.nvim_win_is_valid(file_winid) then
+      -- If both buffer and window are valid, just switch to the window
+      vim.api.nvim_set_current_win(file_winid)
+      return
+    else
+      -- The buffer exists but the window was closed, so we need to reopen the split
+      vim.cmd('vsplit')
+      file_winid = vim.api.nvim_get_current_win()
+      vim.api.nvim_win_set_buf(file_winid, file_bufnr)
+      return
+    end
+  end
+
+  -- If no valid file buffer exists, create a new one
+  vim.cmd('vsplit') -- Open a vertical split
+  file_winid = vim.api.nvim_get_current_win()
+
+  -- Open the file in a new buffer
+  vim.cmd('edit ' .. filepath)
+  file_bufnr = vim.api.nvim_get_current_buf() -- Store the buffer number
+
+  -- Make sure the buffer is modifiable, as we're opening a file for editing
+  vim.bo.modifiable = true
+  -- Don't show buffer in buffer list
+  vim.bo.buflisted = false
+end
+
+function TodoList:open()
+  -- Function to open or create a file using plenary
+  local file_path = Path:new(self.config.filepath)
+  P(self)
+  file_path = Path:new(file_path:expand())
+  assert(
+    file_path:is_absolute() == true,
+    'Error: the filepath set is not an absolute filepath' .. self.config.filepath
+  )
+  file_path = Path:new(file_path)
+
+  -- Check if the file exists
+  if not file_path:exists() then
+    -- If it doesn't exist, create an empty file
+    file_path:touch({ parents = true }) -- Create file and missing directories
+  end
+
+  open_file_in_split(file_path:absolute())
+end
+
 return the_todolist
