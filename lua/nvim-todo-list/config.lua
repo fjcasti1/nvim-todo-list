@@ -9,11 +9,11 @@ local TodoListConfig = {}
 
 ---@return TodoListConfig
 function TodoListConfig.get_default_config()
-  return {
-    filepath = DEFAULT_TODO_PATH,
-    fileformat = 'markdown',
-    ui = Ui.get_default_ui_settings(),
-  }
+    return {
+        filepath = DEFAULT_TODO_PATH,
+        fileformat = 'markdown',
+        ui = Ui.get_default_ui_settings(),
+    }
 end
 
 return TodoListConfig

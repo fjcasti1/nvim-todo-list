@@ -4,9 +4,9 @@ local TodoListUIConfig = {}
 
 ---@return TodoListUIConfig
 function TodoListUIConfig.get_default_ui_settings()
-  return {
-    split = 'left',
-  }
+    return {
+        split = 'left',
+    }
 end
 
 return TodoListUIConfig
