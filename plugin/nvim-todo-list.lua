@@ -1,10 +1,4 @@
--- vim.api.nvim_create_user_command('TodoListToggle', require('nvim-todo-list').hello, {})
--- vim.api.nvim_create_user_command('CacaUpper', function(opts)
---   print(string.upper(opts.fargs[1]))
--- end, {
---   nargs = 1,
---   complete = function(ArgLead, CmdLine, CursorPos)
---     -- return completion candidates as a list-like table
---     return { 'foo', 'bar', 'baz' }
---   end,
--- })
+local todolist = require('nvim-todo-list')
+vim.api.nvim_create_user_command('TodoListOpenWindow', todolist.open_window, {})
+vim.api.nvim_create_user_command('TodoListAddItem', todolist.add_new_todo, {})
+vim.api.nvim_create_user_command('TodoListToggleStatusDone', todolist.toggle_todo_status, {})
